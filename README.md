@@ -16,7 +16,7 @@ Um agente n8n que roda a cada 2 horas, busca vagas via API, passa cada uma por u
 
 ## Como funciona
 
-![Arquitetura do agente](./assets/architecture.png)
+![Arquitetura do agente](./assets/architecture.svg)
 
 ## Stack
 
