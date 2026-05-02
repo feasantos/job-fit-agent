@@ -15,6 +15,9 @@ Monitorar vagas manualmente é ineficiente: centenas de resultados, 90% irreleva
 Um agente n8n que roda a cada 2 horas, busca vagas via API, passa cada uma por um modelo de IA que avalia o fit de 0 a 10, e envia notificação no Telegram somente se a nota for >= 7.
 
 ## Como funciona
+
+![Arquitetura do agente](./assets/architecture.png)
+
 ## Stack
 
 | Camada | Tecnologia |
