@@ -1,0 +1,274 @@
+{
+  "name": "Job Fit Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 2
+            }
+          ]
+        }
+      },
+      "id": "d1aaebc1-85c6-4270-b015-5a87b4269d22",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1344,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "567c10ba-f621-4136-b214-7880634ea9b9",
+      "name": "Loop Over Items",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -720,
+        32
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.item.json.choices[0].message.content.trim();\nconst clean = raw.replace(/```json|```/g, '').trim();\nconst parsed = JSON.parse(clean);\n\nreturn {\n  score: parsed.score,\n  motivo: parsed.motivo,\n  titulo: parsed.titulo,\n  link: $('Loop Over Items').item.json.url\n};"
+      },
+      "id": "b8542437-eea6-4d0c-9076-09faa1916e4e",
+      "name": "Parse Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -256,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "score-check",
+              "leftValue": "={{ $json.score }}",
+              "rightValue": 1,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "e4d87d57-32c8-477f-9d2c-1a796dbaee37",
+      "name": "Score >= 7?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -32,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "1363783356",
+        "text": "=🎯 *Nova vaga com bom fit!*\n\n*{{ $json.titulo }}*\nScore: {{ $json.score }}/10\n\n💬 _{{ $json.motivo }}_\n\n🔗 {{ $json.link }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "98c837b1-a7a0-40a7-9149-e0c07a563cb0",
+      "name": "Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        192,
+        -64
+      ],
+      "webhookId": "fb212b23-f21a-43fd-b62a-6bc2713e2d56",
+      "credentials": {
+        "telegramApi": {
+          "id": "ug1iu3CcI6TVmoFS",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "558ade61-0e2b-43ee-aec3-be17d49aca46",
+      "name": "Ignorar",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        192,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://remotive.com/api/remote-jobs?category=software-dev&limit=20",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -1136,
+        48
+      ],
+      "id": "7a6ae1cc-cafb-4896-a4b4-20fb2673efee",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "jobs",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -928,
+        48
+      ],
+      "id": "09b89206-6b25-4278-a2ef-2e2ff214a8c3",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpBearerAuth",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "json",
+        "body": "={   \"model\": \"openai/gpt-oss-120b:free\",   \"max_tokens\": 300,   \"messages\": [{     \"role\": \"user\",     \"content\": \"Analise esta vaga e me de uma nota de 0 a 10 de fit para um desenvolvedor pleno com foco em IA e automacoes (JS, TS, Python, n8n). Responda APENAS com JSON puro sem markdown: {\\\"score\\\": 8, \\\"motivo\\\": \\\"exemplo\\\", \\\"titulo\\\": \\\"exemplo\\\"}\\n\\nVaga: {{ $json.title }} na empresa {{ $json.company_name }}\"   }] }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -480,
+        48
+      ],
+      "id": "50337e81-d6ab-48b7-ba30-690184451fcd",
+      "name": "HTTP Request1",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "BQgdye2xVgsyRewF",
+          "name": "Bearer Auth account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Response": {
+      "main": [
+        [
+          {
+            "node": "Score >= 7?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Score >= 7?": {
+      "main": [
+        [
+          {
+            "node": "Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Ignorar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Parse Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "39943010-e635-40eb-8d8f-d48111d5a712",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "acf0fce656973ca940cd9f83a8d890e75691ceba849ffcc2106610b3c4f54b2c"
+  },
+  "id": "VhcbhLz6iDJ919DK",
+  "tags": []
+}
